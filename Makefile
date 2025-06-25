@@ -9,6 +9,9 @@ DIR_BIN 	 = ./bin
 DIR_SRC      = ./src
 OBJ_DIR 	 = ./obj
 
+DEPLOY_HOST := petervine@piclock.local
+DEPLOY_DIR := /home/petervine/PiClock
+
 #Lib dirs
 DIR_Config   = ./lib/Config
 DIR_Driver	 = ./lib/Driver
@@ -24,8 +27,7 @@ OBJ_C = $(wildcard ${DIR_SRC}/*.c ${DIR_Driver}/*.c ${DIR_GUI}/*.c ${DIR_EPD}/*.
 OBJ_O = $(patsubst %.c,${OBJ_DIR}/%.o,$(notdir ${OBJ_C}))
 
 
-DEPLOY_HOST := petervine@piclock.local
-DEPLOY_DIR := /home/petervine/PiClock
+
 
 TARGET       = main
 
@@ -51,6 +53,7 @@ LIB += -lpthread
 MSG          = -g -O0 -Wall
 CFLAGS      += $(MSG) $(DEBUG)
 CFLAGS      += --sysroot=$(SYSROOT) -I$(SYSROOT)/usr/include -I$(SYSROOT)/usr/local/include
+CFLAGS 		+= -DRSC_PATH="\"$(DIR_RSC)\""
 LDFLAGS     += --sysroot=$(SYSROOT) -L$(SYSROOT)/usr/lib -L$(SYSROOT)/usr/local/lib
 
 # Create directories if they don't exist
@@ -95,6 +98,10 @@ clean:
 deploy: $(DIR_BIN)/$(TARGET) kill
 	scp $(DIR_BIN)/$(TARGET) $(DEPLOY_HOST):$(DEPLOY_DIR)/
 	rsync -avz $(DIR_RSC) $(DEPLOY_HOST):$(DEPLOY_DIR)/ 
+	rsync -avz $(DIR_SRC) $(DEPLOY_HOST):$(DEPLOY_DIR)/ 
+	rsync -avz $(DIR_LIB) $(DEPLOY_HOST):$(DEPLOY_DIR)/ 
+
+
 
 kill: 
 	ssh $(DEPLOY_HOST) 'killall $(TARGET) || true'

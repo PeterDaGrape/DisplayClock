@@ -30,6 +30,10 @@ typedef struct View {
 
     char iconPath [100];
 
+    void (*closeView)(struct View* self);
+
+    void (*openView)(struct View* self);
+
     void (*touch)(struct View* self, int x, int y);
     
     void (*draw)(struct View* self);

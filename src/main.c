@@ -16,17 +16,15 @@
 #include "MainMenuView.h"
 #include "ClockDisplay.h"
 #include "MandelBrotView.h"
+#include "NetworkView.h"
 
 #define MAX_PARTIAL_REFRESHES 7
 #define DISPLAY_TIMEOUT 120
-#define NUM_VIEWS 1
 
 
 static pthread_t touchThread;
 UBYTE touchThreadContinueFlag = 1;	
 extern GT1151_Dev Dev_Now, Dev_Old;
-
-
 
 
 void *touchThreadHandler(void *arg) {
@@ -66,6 +64,7 @@ int main(void)
     MainMenuView_Init();
     ClockView_Init();
     MandelBrotView_Init();
+    NetworkView_Init();
 
     viewManager.switchView(&viewManager, &mainMenuView);
 
@@ -77,7 +76,6 @@ int main(void)
 	pthread_create(&touchThread, NULL, touchThreadHandler, NULL);
 
     EPD_2in13_V3_Init(EPD_2IN13_V3_FULL);
- 
     EPD_2in13_V3_Clear();
     GT_Init();
 	DEV_Delay_ms(100);
@@ -114,7 +112,6 @@ int main(void)
     time_t sleepTimer = time(NULL) + DISPLAY_TIMEOUT;
 
 
-
     printf("Init succeeded \n");
     while (1) {
         //printf("Current time: %d, sleep timeout: %d\n", time(NULL), sleepTimer);
@@ -131,7 +128,6 @@ int main(void)
                 viewManager.currentView -> touch(viewManager.currentView, EPD_2in13_V3_HEIGHT - Dev_Now.Y[0], Dev_Now.X[0]);
             }   
         }
-
         viewManager.currentView -> update(viewManager.currentView);
         if (viewManager.drawRequired) {
             Paint_Clear(WHITE);

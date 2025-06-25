@@ -12,12 +12,20 @@
 
 #include "ClockDisplay.h"
 #include "MandelBrotView.h"
+
+#ifndef RSC_PATH
+#define RSC_PATH "./rsc"
+#endif
+
+#define ICON_PATH(file) RSC_PATH "/pic/" file
+
+
 #define DBG_REGIONS 0
 #define NUM_REGIONS 2
 
-#define NUM_VIEWS 2
+#define NUM_VIEWS 3
 
-#define NUM_PAGES 1
+#define NUM_PAGES 2
 
 
 #define min(a,b) \
@@ -33,7 +41,7 @@
 extern ViewManager viewManager;
 extern View clockView;
 extern View mandelBrotView;
-
+extern View networkView;
 
 extern GT1151_Dev Dev_Now;
 
@@ -47,7 +55,7 @@ MainMenuData* mainMenuData = NULL;
 
 static struct TouchRegion touchRegions[NUM_REGIONS];
 
-View *views[NUM_VIEWS] = {&clockView, &mandelBrotView};
+View *views[NUM_VIEWS] = {&clockView, &mandelBrotView, &networkView};
 
 
 void MainMenuDraw(struct View* self) {
@@ -85,7 +93,12 @@ void MainMenuDraw(struct View* self) {
 
             int panelStartX = EPD_2in13_V3_HEIGHT / (PANELS_PER_PAGE * 2) - iconSize / 2;
 
-            GUI_ReadBmp(views[index]-> iconPath, i * panelWidth + panelStartX, EPD_2in13_V3_WIDTH - FOOTER_SIZE - 16 - 64, iconSize, iconSize);
+            if (fopen(views[index]-> iconPath, "rb") != NULL) {
+                GUI_ReadBmp(views[index]-> iconPath, i * panelWidth + panelStartX, EPD_2in13_V3_WIDTH - FOOTER_SIZE - 16 - 64, iconSize, iconSize);
+            } else {
+                Debug("File %s does not exist \n", views[index]-> iconPath);
+            }
+            
 
         } else {
             Debug("Invalid view or appName at index %d\n", index);
@@ -145,7 +158,8 @@ void MainMenuTouch(struct View* self, int x, int y) {
 
             int viewIndex = i + data -> page * PANELS_PER_PAGE;
             if (viewIndex < NUM_VIEWS && views[viewIndex] != NULL) {
-                viewManager.switchView(&viewManager, views[viewIndex]);   
+                viewManager.switchView(&viewManager, views[viewIndex]);
+                return;
             }
         }
     }
@@ -162,8 +176,6 @@ void MainMenuTouch(struct View* self, int x, int y) {
         data -> page -= 1;
         viewManager.drawRequired = true;
     }
-
-    printf("%d \n", data -> page);
 
 }
 

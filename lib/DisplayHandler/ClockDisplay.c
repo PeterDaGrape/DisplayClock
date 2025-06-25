@@ -10,6 +10,12 @@
 #include "GT1151.h"
 #include "EPD_2in13_V3.h"
 
+#ifndef RSC_PATH
+#define RSC_PATH "./rsc"
+#endif
+
+#define ICON_PATH(file) RSC_PATH "/pic/" file
+
 #include "MainMenuView.h"
 
 #define HOME_BUTTON_SIZE 32
@@ -49,11 +55,12 @@ void ClockDraw(struct View* self) {
 
     }
     
-    GUI_ReadBmp("./rsc/pic/home.bmp", 0, EPD_2in13_V3_WIDTH - HOME_BUTTON_SIZE, HOME_BUTTON_SIZE, HOME_BUTTON_SIZE);
+    GUI_ReadBmp(ICON_PATH("home.bmp"), 0, EPD_2in13_V3_WIDTH - HOME_BUTTON_SIZE, HOME_BUTTON_SIZE, HOME_BUTTON_SIZE);
 
 }
 
 void ClockUpdate(struct View* self) {
+
 
     ClockData* data = (ClockData*)self->data;
     if (!self || !self->data) {
@@ -75,7 +82,10 @@ void ClockUpdate(struct View* self) {
 void ClockTouch(struct View* self, int x, int y) {
 
     ClockData* data = (ClockData*)self->data;
-
+    if (!self || !self->data) {
+        Debug("Data is invalid! \n");
+        return;
+    }
     for (int i = 0; i < NUM_REGIONS; i++) {
         if (touchRegions[i].testRegion(&touchRegions[i], x, y)) {
             printf("Region %i was touched \n", i);
@@ -102,7 +112,7 @@ struct View clockView = {
     .touch = ClockTouch,
     .data = NULL,
     .appName = "Clock",
-    .iconPath = "./rsc/pic/clock.bmp",
+    .iconPath = ICON_PATH("clock.bmp"),
     .draw = ClockDraw,
     .update = ClockUpdate 
 };

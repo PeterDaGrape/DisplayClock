@@ -10,6 +10,13 @@
 #include <math.h>
 #include <pthread.h>
 
+#ifndef RSC_PATH
+#define RSC_PATH "./rsc"
+#endif
+
+#define ICON_PATH(file) RSC_PATH "/pic/" file
+
+
 #define HOME_BUTTON_SIZE 32
 #define NUM_REGIONS 2
 
@@ -85,7 +92,7 @@ void* renderBand(void* arg) {
 }
 
 
-void draw(struct View* self) {
+static void draw(struct View* self) {
     MandelBrotData* data = (MandelBrotData*)self->data;
     if (!self || !self->data) {
         Debug("Data is invalid! \n");
@@ -119,13 +126,12 @@ void draw(struct View* self) {
         printf("%i %i %i %i \n", touchRegions[i].xStart, touchRegions[i].yStart, touchRegions[i].xStop, touchRegions[i].yStop);
 
     }
-    GUI_ReadBmp("./rsc/pic/reset.bmp", EPD_2in13_V3_HEIGHT - HOME_BUTTON_SIZE, EPD_2in13_V3_WIDTH - HOME_BUTTON_SIZE, HOME_BUTTON_SIZE, HOME_BUTTON_SIZE);
- 
-    GUI_ReadBmp("./rsc/pic/home.bmp", 0, EPD_2in13_V3_WIDTH - HOME_BUTTON_SIZE, HOME_BUTTON_SIZE, HOME_BUTTON_SIZE);
+    GUI_ReadBmp(ICON_PATH("reset.bmp"), EPD_2in13_V3_HEIGHT - HOME_BUTTON_SIZE, EPD_2in13_V3_WIDTH - HOME_BUTTON_SIZE, HOME_BUTTON_SIZE, HOME_BUTTON_SIZE);
+    GUI_ReadBmp(ICON_PATH("home.bmp"), 0, EPD_2in13_V3_WIDTH - HOME_BUTTON_SIZE, HOME_BUTTON_SIZE, HOME_BUTTON_SIZE);
 
 }
 
-void update(struct View* self) {
+static void update(struct View* self) {
 
     MandelBrotData* data = (MandelBrotData*)self->data;
     if (!self || !self->data) {
@@ -192,7 +198,7 @@ struct View mandelBrotView = {
     .touch = touch,
     .data = NULL,
     .appName = "MandelBrot",
-    .iconPath = "./rsc/pic/mandelbrot.bmp",
+    .iconPath = ICON_PATH("mandelbrot.bmp"),
     .draw = draw,
     .update = update 
 };

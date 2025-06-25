@@ -16,10 +16,26 @@ bool TouchRegion_testRegion(TouchRegion* self, int x, int y) {
 }
 
 void ViewManagerSwitchView(struct ViewManager* self, struct View* view) {
-    self -> currentView = view;
-    self -> drawRequired = true;
-    printf("Draw required %i \n", self -> drawRequired);
+    if (!self) {
+        printf("ViewManagerSwitchView: self is NULL!\n");
+        return;
+    }
+    if (!view) {
+        printf("ViewManagerSwitchView: view is NULL!\n");
+        return;
+    }
+    
+    if (self->currentView && self->currentView->closeView) {
+        self -> currentView -> closeView(self -> currentView);
+    }
 
+    self -> currentView = view;
+    if (self -> currentView -> openView) {
+        self -> currentView -> openView(self -> currentView);
+    }
+    self -> drawRequired = true;
+
+    printf("View switched \n");
 }
 
 
