@@ -9,10 +9,16 @@
 #include "Debug.h"
 #include "GT1151.h"
 #include "EPD_2in13_V3.h"
+#include <curl.h>
+#include <json-c/json.h>
+
+#include <time.h>
 
 #ifndef RSC_PATH
 #define RSC_PATH "./rsc"
 #endif
+
+#define FORECAST_DAYS 7
 
 #define ICON_PATH(file) RSC_PATH "/pic/" file
 
@@ -25,18 +31,29 @@
 extern ViewManager viewManager;
 extern View mainMenuView;
 
+typedef struct WeatherData {
+    bool weatherChanged;
+    bool threadActive;
+    bool weatherAvailable;
+    char weatherString[64];
+    char weatherCondition[64];
+    char dailyTemperatures[8][FORECAST_DAYS];
+    char dailyWeekdays[8][FORECAST_DAYS];
+    
+} WeatherData;
+
 typedef struct ClockData {
     char formattedTime[100];
     char formattedDate[32];
     int min;
+    WeatherData* weatherData;
 } ClockData;
 
 ClockData* clockData = NULL;
+WeatherData* weatherData = NULL;
 
 static struct TouchRegion touchRegions[NUM_REGIONS];
 
-<<<<<<< Updated upstream
-=======
 
 
 pthread_t weatherThread;
@@ -205,11 +222,12 @@ void* weatherCheck(void* arg) {
 
 }
 
-#define WEATHER_BOX_HEIGHT 32
+#define WEATHER_BOX_Y_POS 29
+#define WEATHER_BOX_WIDTH 35
 #define WEATHER_BOX_HEIGHT 58
-#define WEATHER_BOX_WIDTH 32
+#define WEATHER_DAY_Y WEATHER_BOX_Y_POS + WEATHER_BOX_HEIGHT - 12
+#define WEATHER_TEMP_Y WEATHER_DAY_Y - 12 - 13
 
->>>>>>> Stashed changes
 void ClockDraw(struct View* self) {
  
     ClockData* data = (ClockData*)self->data;
@@ -218,12 +236,8 @@ void ClockDraw(struct View* self) {
         return;
     }
     //Paint_DrawString_EN(0, 0, "CLOCK", &Font16, WHITE, BLACK);
-<<<<<<< Updated upstream
-    Paint_DrawString_EN(0, 0, data -> formattedTime, &Font20, WHITE, BLACK);
-    Paint_DrawString_EN(0, 20, data -> formattedDate, &Font16, WHITE, BLACK);
-=======
     Paint_DrawString_EN(5, 5, data -> formattedTime, &Font24, WHITE, BLACK); 
-    Paint_DrawString_EN(110, 9, data -> formattedDate, &Font16, WHITE, BLACK);
+    Paint_DrawString_EN(105, 9, data -> formattedDate, &Font16, WHITE, BLACK);
 
 
     if (data -> weatherData -> weatherAvailable) {
@@ -233,13 +247,15 @@ void ClockDraw(struct View* self) {
 
     
         for (int i = 0; i < FORECAST_DAYS; i++) {
-            Paint_DrawString_EN(i * WEATHER_BOX_WIDTH, WEATHER_BOX_HEIGHT, data -> weatherData -> dailyWeekdays[i], &Font12, WHITE, BLACK);
-            Paint_DrawRectangle(i * WEATHER_BOX_WIDTH, WEATHER_BOX_HEIGHT, (i+1) * WEATHER_BOX_WIDTH, WEATHER_BOX_HEIGHT + WEATHER_BOX_HEIGHT, BLACK, 1, false);
-            Paint_DrawString_EN(i * WEATHER_BOX_WIDTH, WEATHER_BOX_HEIGHT + 12, data -> weatherData -> dailyTemperatures[i], &Font16, WHITE, BLACK);
+            Paint_DrawString_EN(i * WEATHER_BOX_WIDTH, WEATHER_DAY_Y, data -> weatherData -> dailyWeekdays[i], &Font12, WHITE, BLACK);
+            int circleXOffset = (strlen(data -> weatherData -> dailyWeekdays[i]) - 1) * 12 + 2;
+
+            Paint_DrawCircle(i * WEATHER_BOX_WIDTH + circleXOffset, WEATHER_TEMP_Y + 12, 2, BLACK, 1, 0);
+            Paint_DrawRectangle(i * WEATHER_BOX_WIDTH, WEATHER_BOX_Y_POS, (i+1) * WEATHER_BOX_WIDTH, WEATHER_BOX_Y_POS + WEATHER_BOX_HEIGHT, BLACK, 1, false);
+            Paint_DrawString_EN(i * WEATHER_BOX_WIDTH, WEATHER_TEMP_Y + 12, data -> weatherData -> dailyTemperatures[i], &Font16, WHITE, BLACK);
         }
 
     }
->>>>>>> Stashed changes
 
 
     // draw touch points
@@ -264,6 +280,18 @@ void ClockUpdate(struct View* self) {
     }
     time_t now = time(NULL);
     struct tm *local_time = localtime(&now);
+
+    WeatherData *weatherData = data -> weatherData;
+    if (!weatherData) {
+        Debug("weatherData is invalid! \n");
+        return;
+    }
+
+    if (weatherData -> weatherAvailable && weatherData -> weatherChanged) {
+        viewManager.drawRequired = true;
+        weatherData -> weatherChanged = false;
+    }
+
 
     if (local_time->tm_min != data->min) {
 
@@ -301,6 +329,43 @@ void ClockTouch(struct View* self, int x, int y) {
 
 }
 
+static void openView(struct View* self) {
+    ClockData* data = (ClockData*)self->data;
+    if (!self || !self->data) {
+        Debug("Data is invalid! \n");
+        return;
+    }
+
+    WeatherData *weatherData = data -> weatherData;
+    if (!weatherData) {
+        Debug("weatherData is invalid! \n");
+        return;
+    }
+
+    weatherData -> threadActive = true;
+
+    pthread_create(&weatherThread, NULL, weatherCheck, self -> data);
+}
+
+static void closeView(struct View* self) {
+    ClockData* data = (ClockData*)self->data;
+    if (!self || !self->data) {
+        Debug("Data is invalid! \n");
+        return;
+    }
+
+    WeatherData *weatherData = data -> weatherData;
+    if (!weatherData) {
+        Debug("weatherData is invalid! \n");
+        return;
+    }
+
+    weatherData -> threadActive = false;
+ 
+    //pthread_join(weatherThread, NULL);
+    printf("Closed ping thread \n");
+}
+
 struct View clockView = {
     .touchRegions = touchRegions,
     .numTouchRegions = NUM_REGIONS,
@@ -308,12 +373,17 @@ struct View clockView = {
     .data = NULL,
     .appName = "Clock",
     .iconPath = ICON_PATH("clock.bmp"),
+    .openView = openView,
+    .closeView = closeView,
     .draw = ClockDraw,
     .update = ClockUpdate 
 };
 
+
+
 void ClockView_Init(void) {
     clockData = malloc(sizeof(ClockData));
+    weatherData = malloc(sizeof(WeatherData));
 
     for (int i = 0; i < NUM_REGIONS; i++) {
         touchRegions[i].setRegion = TouchRegion_setRegion;
@@ -325,6 +395,15 @@ void ClockView_Init(void) {
 
     clockData -> min = -1;
 
+    weatherData -> threadActive = false;
+    weatherData -> weatherAvailable = false;
+    strcpy(weatherData -> weatherString, "No weather data available");
+    weatherData -> weatherChanged  = false;
+
+    clockData -> weatherData = weatherData;
+
+
     clockView.data = clockData;
+
     
 }

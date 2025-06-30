@@ -5,6 +5,8 @@ LD := $(CROSS_COMPILE)ld
 AR := $(CROSS_COMPILE)ar
 AS := $(CROSS_COMPILE)as
 
+include .env
+
 DIR_BIN 	 = ./bin
 DIR_SRC      = ./src
 OBJ_DIR 	 = ./obj
@@ -20,7 +22,8 @@ DIR_FONTS    = ./lib/Fonts
 DIR_EPD		 = ./lib/EPD
 DIR_DISPLAY_HANDLER		 = ./lib/DisplayHandler
 
-DIR_RSC 	 = ./rsc
+
+DIR_RSC 	 = rsc
 DIR_LIB      = ./lib
 
 OBJ_C = $(wildcard ${DIR_SRC}/*.c ${DIR_Driver}/*.c ${DIR_GUI}/*.c ${DIR_EPD}/*.c ${DIR_Config}/*.c ${DIR_DISPLAY_HANDLER}/*.c ${DIR_FONTS}/*.c )
@@ -47,22 +50,30 @@ else ifeq ($(USELIB), USE_GPIOD_LIB)
     LIB = -lgpiod -lm
 endif
 LIB += -lpthread
+LIB += -lcurl
+LIB += -ljson-c
 
 
 # Compiler flags
 MSG          = -g -O0 -Wall
 CFLAGS      += $(MSG) $(DEBUG)
 CFLAGS      += --sysroot=$(SYSROOT) -I$(SYSROOT)/usr/include -I$(SYSROOT)/usr/local/include
-CFLAGS 		+= -DRSC_PATH="\"$(DIR_RSC)\""
-LDFLAGS     += --sysroot=$(SYSROOT) -L$(SYSROOT)/usr/lib -L$(SYSROOT)/usr/local/lib
-
+CFLAGS 		+= -I$(SYSROOT)/usr/include/aarch64-linux-gnu/curl
+CFLAGS 		+= -I$(SYSROOT)/usr/include/json-c
+CFLAGS 		+= -DRSC_PATH="\"$(DEPLOY_DIR)/$(DIR_RSC)\""
+CFLAGS 		+= -DAPI_KEY=\"$(API_KEY)\"
+LDFLAGS		+= --sysroot=$(SYSROOT) \
+            -L$(SYSROOT)/usr/lib \
+            -L$(SYSROOT)/usr/local/lib \
+            -L$(SYSROOT)/usr/lib/aarch64-linux-gnu \
+            -Wl,-rpath-link=$(SYSROOT)/usr/lib/aarch64-linux-gnu
 # Create directories if they don't exist
 $(shell mkdir -p $(OBJ_DIR) $(DIR_BIN))
 
 
 # Build target
 $(DIR_BIN)/$(TARGET): $(OBJ_O)
-	$(CC) $(CFLAGS) $(OBJ_O) -o $@ $(LIB)
+	$(CC) $(CFLAGS) $(OBJ_O) -o $@ $(LDFLAGS) $(LIB)
 
 ${OBJ_DIR}/%.o:$(DIR_SRC)/%.c
 	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Driver) -I $(DIR_FONTS)  -I $(DIR_EPD) -I $(DIR_GUI) -I $(DIR_DISPLAY_HANDLER) 
@@ -97,6 +108,8 @@ clean:
 
 deploy: $(DIR_BIN)/$(TARGET) kill
 	scp $(DIR_BIN)/$(TARGET) $(DEPLOY_HOST):$(DEPLOY_DIR)/
+
+	
 	rsync -avz $(DIR_RSC) $(DEPLOY_HOST):$(DEPLOY_DIR)/ 
 	rsync -avz $(DIR_SRC) $(DEPLOY_HOST):$(DEPLOY_DIR)/ 
 	rsync -avz $(DIR_LIB) $(DEPLOY_HOST):$(DEPLOY_DIR)/ 
