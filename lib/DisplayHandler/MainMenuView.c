@@ -39,6 +39,7 @@
 #define FOOTER_SIZE 16
 
 extern ViewManager viewManager;
+
 extern View clockView;
 extern View mandelBrotView;
 extern View networkView;
@@ -179,9 +180,6 @@ void MainMenuTouch(struct View* self, int x, int y) {
 
 }
 
-
-
-
 struct View mainMenuView = {
     .touchRegions = touchRegions,
     .numTouchRegions = NUM_REGIONS,
@@ -200,7 +198,6 @@ void MainMenuView_Init(void) {
         touchRegions[i].setRegion = TouchRegion_setRegion;
         touchRegions[i].testRegion = TouchRegion_testRegion;
     }
-
 
     //This is how the touch regions are set! 
     // Forwards page button

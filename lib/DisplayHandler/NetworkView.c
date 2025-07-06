@@ -17,9 +17,6 @@
 
 #define ICON_PATH(file) RSC_PATH "/pic/" file
 
-// Usage:
-#include "MainMenuView.h"
-
 #define HOME_BUTTON_SIZE 32
 #define NUM_REGIONS 1
 
@@ -40,8 +37,6 @@ NetworkData* networkData = NULL;
 static struct TouchRegion touchRegions[NUM_REGIONS];
 
 pthread_t thread;
-
-
 
 void* checkPing(void* arg) {
     NetworkData *data = (NetworkData*)arg;
