@@ -18,13 +18,14 @@
 #include "MandelBrotView.h"
 #include "NetworkView.h"
 
-#define MAX_PARTIAL_REFRESHES 7
-#define DISPLAY_TIMEOUT 120
 
+#define MAX_PARTIAL_REFRESHES 10
+#define DISPLAY_TIMEOUT 10
 
 static pthread_t touchThread;
 UBYTE touchThreadContinueFlag = 1;	
 extern GT1151_Dev Dev_Now, Dev_Old;
+
 
 
 void *touchThreadHandler(void *arg) {
@@ -32,11 +33,10 @@ void *touchThreadHandler(void *arg) {
 	while(touchThreadContinueFlag) {
 		if(DEV_Digital_Read(INT) == 0) {
 			Dev_Now.Touch = 1;
-		}
-		else {
+		} else {
 			Dev_Now.Touch = 0;
 		}
-		DEV_Delay_ms(1);
+		DEV_Delay_ms(20);
 	}
 	printf("thread:exit\r\n");
 	pthread_exit(NULL);
@@ -112,6 +112,9 @@ int main(void)
     time_t sleepTimer = time(NULL) + DISPLAY_TIMEOUT;
 
 
+
+
+
     printf("Init succeeded \n");
     while (1) {
         //printf("Current time: %d, sleep timeout: %d\n", time(NULL), sleepTimer);
@@ -143,10 +146,12 @@ int main(void)
         }
 
         if (viewManager.drawRequired) {
+            
+
             printf("Refreshing... \n");
             viewManager.drawRequired = false;
             sleepTimer = now + DISPLAY_TIMEOUT;
-            if (refreshTimer++ > MAX_PARTIAL_REFRESHES || viewManager.forceFullRefresh || sleep) {
+            if (refreshTimer++ > MAX_PARTIAL_REFRESHES || viewManager.forceFullRefresh ) {
                 refreshTimer = 0;
                 printf("I'm fully refreshing \n");
                 EPD_2in13_V3_Init(EPD_2IN13_V3_FULL);
@@ -155,13 +160,20 @@ int main(void)
                 viewManager.forceFullRefresh = false;
                 
             } else {
+                if (sleep) {
+                    EPD_2in13_V3_Init(EPD_2IN13_V3_PART);
+                }
                 printf("I'm partially refreshing \n");
                 EPD_2in13_V3_Display_Partial_Wait(image);
             }
             
             sleep = false;
         } else {
-            DEV_Delay_ms(1);
+            if (sleep) {
+                DEV_Delay_ms(100);
+            } else {
+                DEV_Delay_ms(10);
+            }
         }
 
     }

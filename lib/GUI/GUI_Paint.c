@@ -796,3 +796,4 @@ void Paint_DrawBitMap(const unsigned char* image_buffer)
         }
     }
 }
+

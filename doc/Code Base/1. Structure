@@ -1,0 +1,7 @@
+# General
+This program is designed to be able to be extended. Since I wanted OOP like functionality but I'm not using C++, this is a bit of a mess, and was assisted by AI tools.
+
+The only source file currently is main.c, and contains the overall logic, which is nicely simple (I think).
+All the views are in lib (may change later), and are placed in DisplayHandler (not a good name).
+
+The EPD lib is for drawing to the E-Paper display, though I had a couple issues with the original, so this is not interchangeable with waveshares original one.

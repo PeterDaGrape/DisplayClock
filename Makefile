@@ -21,6 +21,7 @@ DIR_GUI		 = ./lib/GUI
 DIR_FONTS    = ./lib/Fonts
 DIR_EPD		 = ./lib/EPD
 DIR_DISPLAY_HANDLER		 = ./lib/DisplayHandler
+DIR_IMAGE 	 =	./lib/Image
 
 
 DIR_RSC 	 = rsc
@@ -28,9 +29,6 @@ DIR_LIB      = ./lib
 
 OBJ_C = $(wildcard ${DIR_SRC}/*.c ${DIR_Driver}/*.c ${DIR_GUI}/*.c ${DIR_EPD}/*.c ${DIR_Config}/*.c ${DIR_DISPLAY_HANDLER}/*.c ${DIR_FONTS}/*.c )
 OBJ_O = $(patsubst %.c,${OBJ_DIR}/%.o,$(notdir ${OBJ_C}))
-
-
-
 
 TARGET       = main
 
@@ -76,7 +74,7 @@ $(DIR_BIN)/$(TARGET): $(OBJ_O)
 	$(CC) $(CFLAGS) $(OBJ_O) -o $@ $(LDFLAGS) $(LIB)
 
 ${OBJ_DIR}/%.o:$(DIR_SRC)/%.c
-	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Driver) -I $(DIR_FONTS)  -I $(DIR_EPD) -I $(DIR_GUI) -I $(DIR_DISPLAY_HANDLER) 
+	$(CC) $(CFLAGS) -c  $< -o $@ -I $(DIR_Config) -I $(DIR_Driver) -I $(DIR_FONTS)  -I $(DIR_EPD) -I $(DIR_GUI) -I $(DIR_DISPLAY_HANDLER) -I $(DIR_IMAGE) 
 
     
 ${OBJ_DIR}/%.o:$(DIR_Driver)/%.c
@@ -122,6 +120,5 @@ kill:
 run: deploy
 	ssh $(DEPLOY_HOST) 'cd $(DEPLOY_DIR); nohup ./$(TARGET) > /dev/null 2>&1 &'
 
-restart: kill deploy run
 
 .PHONY: all clean

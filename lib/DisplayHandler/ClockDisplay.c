@@ -24,7 +24,7 @@
 
 #include "MainMenuView.h"
 
-#define HOME_BUTTON_SIZE 32
+#define HOME_BUTTON_SIZE 24
 
 #define NUM_REGIONS 1
 
@@ -140,11 +140,16 @@ void* weatherCheck(void* arg) {
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 5L);   // 5 seconds max to connect
 
     time_t lastTime = -1;
+    int old_day_of_month = 0;
+
     while (weatherData -> threadActive) {
 
         time_t now = time(NULL);
+        struct tm *local_time = localtime(&now);
+        int day_of_month = local_time->tm_mday;
 
-        if (curl && now - lastTime > 60 * 60 * 3) {
+        if (curl && (now - lastTime > 60 * 60 * 3 || day_of_month != old_day_of_month)) {
+
             lastTime = now;
 
             chunk.size = 0;             // No data yet
@@ -214,8 +219,10 @@ void* weatherCheck(void* arg) {
                 json_object_put(parsed_json); // free JSON object
 
             }
+
         }
-        DEV_Delay_ms(10);
+        old_day_of_month = day_of_month;
+        DEV_Delay_ms(100);
 
     }
     printf("Weather thread stopped. \n");
@@ -224,7 +231,7 @@ void* weatherCheck(void* arg) {
 
 #define WEATHER_BOX_Y_POS 29
 #define WEATHER_BOX_WIDTH 35
-#define WEATHER_BOX_HEIGHT 58
+#define WEATHER_BOX_HEIGHT 67
 #define WEATHER_DAY_Y WEATHER_BOX_Y_POS + WEATHER_BOX_HEIGHT - 12
 #define WEATHER_TEMP_Y WEATHER_DAY_Y - 12 - 13
 
@@ -278,6 +285,7 @@ void ClockUpdate(struct View* self) {
         Debug("Data is invalid! \n");
         return;
     }
+    
     time_t now = time(NULL);
     struct tm *local_time = localtime(&now);
 

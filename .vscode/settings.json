@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "*.py": "python",
+        "json.h": "c",
+        "stb_image_write.h": "c",
+        "mainmenuview.h": "c",
+        "unistd.h": "c",
+        "fonts.h": "c",
+        "clockdisplay.h": "c"
+    }
+}

@@ -207,6 +207,8 @@ void Paint_DrawDate(UWORD Xstart, UWORD Ystart, PAINT_TIME *pTime, sFONT* Font, 
 void Paint_DrawBitMap(const unsigned char* image_buffer);
 
 
+
+
 #endif
 
 

@@ -49,6 +49,7 @@ void* checkPing(void* arg) {
         Debug("Data is invalid! \n");
         return 0;
     }
+    system("sudo ip link set wlan0 up");
 
     while (data -> threadActive) {
 
@@ -92,6 +93,8 @@ void* checkPing(void* arg) {
             }
 
         }
+        system("sudo ip link set wlan0 down");
+
         /*
         if (!data -> isUpdated) {
             Debug("Something wrong with isUpdated \n");
